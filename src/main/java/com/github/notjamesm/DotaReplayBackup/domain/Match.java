@@ -6,17 +6,17 @@ import lombok.Value;
 public class Match {
       MatchId match_id;
       String player_slot;
-      String radiant_win;
+      boolean radiant_win;
       String start_time;
-      String duration;
+      long duration;
       String game_mode;
       String lobby_type;
       String hero_id;
       String version;
-      String kills;
-      String deaths;
-      String assists;
+      long kills;
+      long deaths;
+      long assists;
       String skill;
       String leaver_status;
-      String party_size;
+      long party_size;
 }

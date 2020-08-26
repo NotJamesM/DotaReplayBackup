@@ -18,6 +18,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -35,20 +36,20 @@ class OpenDotaClientTest implements WithAssertions {
         ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
 
         when(httpClient.send(requestCaptor.capture(), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any())).thenReturn(new MockHttpResponse(REPLAY_RESPONSE_JSON));
-        DotaReplay replayDetails = underTest.getReplayDetails(MatchId.of(12346L));
+        List<DotaReplay> replayDetails = underTest.getReplayDetails(List.of(MatchId.of(123L)));
 
         assertThat(requestCaptor.getValue().uri().toASCIIString()).isEqualTo("https://something/replays");
 
-        assertThat(replayDetails.getCluster()).isEqualTo(321);
-        assertThat(replayDetails.getReplaySalt()).isEqualTo(159);
-        assertThat(replayDetails.getMatchId()).isEqualTo(MatchId.of(12346));
+        assertThat(replayDetails.get(0).getCluster()).isEqualTo(321);
+        assertThat(replayDetails.get(0).getReplaySalt()).isEqualTo(159);
+        assertThat(replayDetails.get(0).getMatchId()).isEqualTo(MatchId.of(12346));
     }
 
     @Test
     void clientThrowsExceptionIfHttpCallFails() throws IOException, InterruptedException {
         when(httpClient.send(any(), any())).thenThrow(IOException.class);
 
-        assertThatThrownBy(() -> underTest.getReplayDetails(new MatchId(123L)))
+        assertThatThrownBy(() -> underTest.getReplayDetails(List.of(MatchId.of(123L))))
                 .isExactlyInstanceOf(IllegalStateException.class)
                 .hasCauseExactlyInstanceOf(IOException.class);
     }
@@ -57,7 +58,7 @@ class OpenDotaClientTest implements WithAssertions {
     void clientThrowsExceptionIfObjectMappingFails() throws IOException, InterruptedException {
         when(httpClient.send(any(), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any())).thenReturn(new MockHttpResponse(BAD_REPLAY_RESPONSE_JSON));
 
-        assertThatThrownBy(() -> underTest.getReplayDetails(new MatchId(123L)))
+        assertThatThrownBy(() -> underTest.getReplayDetails(List.of(MatchId.of(123L))))
                 .isExactlyInstanceOf(IllegalStateException.class)
                 .hasCauseInstanceOf(JsonProcessingException.class);
     }
@@ -117,5 +118,5 @@ class OpenDotaClientTest implements WithAssertions {
         public HttpClient.Version version() {
             return null;
         }
-    };
+    }
 }

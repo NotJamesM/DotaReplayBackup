@@ -35,8 +35,8 @@ public class OpenDotaClient implements DotaApiClient {
 
         try {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            Match[] matchIds = new ObjectMapper().readValue(response.body(), Match[].class);
-            return Arrays.asList(matchIds);
+            Match[] arraysOfMatch = new ObjectMapper().readValue(response.body(), Match[].class);
+            return Arrays.asList(arraysOfMatch);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             throw new IllegalStateException(e);

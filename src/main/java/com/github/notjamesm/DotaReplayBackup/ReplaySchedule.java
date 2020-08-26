@@ -3,24 +3,39 @@ package com.github.notjamesm.DotaReplayBackup;
 import com.github.notjamesm.DotaReplayBackup.clients.DotaApiClient;
 import com.github.notjamesm.DotaReplayBackup.clients.ValveReplayClient;
 import com.github.notjamesm.DotaReplayBackup.domain.DotaReplay;
+import com.github.notjamesm.DotaReplayBackup.domain.MatchId;
+import com.github.notjamesm.DotaReplayBackup.domain.PlayerId;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
 @Component
 public class ReplaySchedule {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger;
     private final ReplayService replayService;
     private final ValveReplayClient valveReplayClient;
 
-    public ReplaySchedule(DotaApiClient dotaApiClient, ReplayService replayService, ValveReplayClient valveReplayClient) {
+
+    private static final List<PlayerId> PLAYER_IDS = List.of(
+            PlayerId.of(32697432L), // James
+            PlayerId.of(85743446L), // Angus
+            PlayerId.of(141572670L), // Arjun
+            PlayerId.of(70587231L), // Zack
+            PlayerId.of(90260986L), // Henry
+            PlayerId.of(144765668L), // Rob
+            PlayerId.of(241887018L), // Jools
+            PlayerId.of(428953965L), // DaffyDuck
+            PlayerId.of(78764445L) // Jon
+    );
+
+
+    public ReplaySchedule(DotaApiClient dotaApiClient, Logger logger, ReplayService replayService, ValveReplayClient valveReplayClient) {
+        this.logger = logger;
         this.replayService = replayService;
         this.valveReplayClient = valveReplayClient;
     }
@@ -28,8 +43,10 @@ public class ReplaySchedule {
     //    @Scheduled(cron = "${replay.cron.string}")
     @Scheduled(fixedDelay = 60000, initialDelay = 1000)
     public void job() {
-        List<DotaReplay> replayDetails = replayService.getReplayDetails(replayService.getMatchIds());
-        replayDetails.forEach(valveReplayClient::downlodReplay);
-        System.out.println("!DOWNLOAD COMEPLETED!");
+        List<MatchId> matchIds = replayService.getMatchIds(PLAYER_IDS);
+
+        List<DotaReplay> replayDetails = replayService.getReplayDetails(matchIds);
+        valveReplayClient.downloadReplays(replayDetails);
+        System.out.println("!DOWNLOAD COMPLETED!");
     }
 }
