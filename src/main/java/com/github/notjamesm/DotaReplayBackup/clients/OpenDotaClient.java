@@ -6,7 +6,7 @@ import com.github.notjamesm.DotaReplayBackup.domain.DotaReplay;
 import com.github.notjamesm.DotaReplayBackup.domain.Match;
 import com.github.notjamesm.DotaReplayBackup.domain.MatchId;
 import com.github.notjamesm.DotaReplayBackup.domain.PlayerId;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,16 +21,23 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 
 @Service
-@RequiredArgsConstructor
 public class OpenDotaClient implements DotaApiClient {
 
     private final HttpClientConfig config;
     private final HttpClient httpClient;
+    private final Logger logger;
 
     private static final String RECENT_MATCHES = "players/%d/matches?date=7";
 
+    public OpenDotaClient(HttpClientConfig config, HttpClient httpClient, Logger logger) {
+        this.config = config;
+        this.httpClient = httpClient;
+        this.logger = logger;
+    }
+
     @Override
     public List<Match> getMatchesForPlayer(PlayerId playerId) {
+        logger.info("Getting matches for Player ID:");
         HttpRequest httpRequest = HttpRequest.newBuilder().uri(constructRecentMatchesUri(playerId)).build();
 
         try {
@@ -38,22 +45,21 @@ public class OpenDotaClient implements DotaApiClient {
             Match[] arraysOfMatch = new ObjectMapper().readValue(response.body(), Match[].class);
             return Arrays.asList(arraysOfMatch);
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            logger.error(format("Error getting matches Player ID: %s", playerId), e);
             throw new IllegalStateException(e);
         }
     }
 
     @Override
     public List<DotaReplay> getReplayDetails(List<MatchId> matchIds) {
-        System.out.println("matchIds = " + matchIds);
+        logger.info(format("Finding replay details for Match IDs: %s", matchIds));
         HttpRequest httpRequest = HttpRequest.newBuilder().uri(constructReplayUri(matchIds)).build();
 
         try {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            System.out.println("response = " + response);
             return Arrays.asList(new ObjectMapper().readValue(response.body(), DotaReplay[].class));
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            logger.error(format("Error getting replay details for Match IDs { %s }\n", matchIds), e);
             throw new IllegalStateException(e);
         }
     }

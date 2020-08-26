@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.slf4j.Logger;
 
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
@@ -26,9 +27,11 @@ import static org.mockito.Mockito.*;
 
 class OpenDotaClientTest implements WithAssertions {
 
-    HttpClient httpClient = mock(HttpClient.class);
-    HttpClientConfig config = mock(HttpClientConfig.class);
-    OpenDotaClient underTest = new OpenDotaClient(config, httpClient);
+    private final HttpClient httpClient = mock(HttpClient.class);
+    private final HttpClientConfig config = mock(HttpClientConfig.class);
+    private final Logger logger = mock(Logger.class);
+
+    private final OpenDotaClient underTest = new OpenDotaClient(config, httpClient, logger);
 
     @Test
     void clientGetReplayDetailsFromMatchId() throws IOException, InterruptedException {
@@ -40,9 +43,10 @@ class OpenDotaClientTest implements WithAssertions {
 
         assertThat(requestCaptor.getValue().uri().toASCIIString()).isEqualTo("https://something/replays");
 
-        assertThat(replayDetails.get(0).getCluster()).isEqualTo(321);
-        assertThat(replayDetails.get(0).getReplaySalt()).isEqualTo(159);
-        assertThat(replayDetails.get(0).getMatchId()).isEqualTo(MatchId.of(12346));
+        DotaReplay dotaReplay = replayDetails.get(0);
+        assertThat(dotaReplay.getCluster()).isEqualTo(321);
+        assertThat(dotaReplay.getReplaySalt()).isEqualTo(159);
+        assertThat(dotaReplay.getMatchId()).isEqualTo(MatchId.of(12346));
     }
 
     @Test

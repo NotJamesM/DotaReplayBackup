@@ -36,14 +36,14 @@ public class ValveReplayClient {
     private void downloadReplay(DotaReplay dotaReplay) {
         HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(dotaReplay.replayUrl())).build();
         try {
-            logger.info(format("Downloading replay %d of %d", counter, total));
+            logger.info(format("Downloading replay %d of %d (%s)", counter, total, dotaReplay.getMatchId()));
             Files.createDirectories(Paths.get("replays"));
             final HttpResponse<Path> httpResponse = httpClient.send(httpRequest, getFileHandler(dotaReplay));
 
             if (httpResponse == null)
                 throw new IllegalStateException("Http Response was null.");
 
-            updateLatestMatchId(dotaReplay);
+            updateMatchIdCheckpoint(dotaReplay);
             counter++;
         } catch (Exception e) {
             logError(dotaReplay, e);
@@ -58,11 +58,11 @@ public class ValveReplayClient {
         return HttpResponse.BodyHandlers.ofFile(Paths.get(constructReplayFilename(dotaReplay)));
     }
 
-    private void updateLatestMatchId(DotaReplay dotaReplay) {
+    private void updateMatchIdCheckpoint(DotaReplay dotaReplay) {
         try {
             Files.writeString(Path.of(LATEST_MATCH_ID_FILE_NAME), Long.toString(dotaReplay.getMatchId().getMatchId()));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(format("Error updating Match ID checkpoint with Match ID { %s }:", dotaReplay), e);
         }
     }
 

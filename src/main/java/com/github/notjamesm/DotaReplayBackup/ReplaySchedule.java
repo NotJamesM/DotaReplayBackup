@@ -1,6 +1,5 @@
 package com.github.notjamesm.DotaReplayBackup;
 
-import com.github.notjamesm.DotaReplayBackup.clients.DotaApiClient;
 import com.github.notjamesm.DotaReplayBackup.clients.ValveReplayClient;
 import com.github.notjamesm.DotaReplayBackup.domain.DotaReplay;
 import com.github.notjamesm.DotaReplayBackup.domain.MatchId;
@@ -10,8 +9,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-
-import static java.lang.String.format;
 
 @Component
 public class ReplaySchedule {
@@ -34,7 +31,7 @@ public class ReplaySchedule {
     );
 
 
-    public ReplaySchedule(DotaApiClient dotaApiClient, Logger logger, ReplayService replayService, ValveReplayClient valveReplayClient) {
+    public ReplaySchedule(Logger logger, ReplayService replayService, ValveReplayClient valveReplayClient) {
         this.logger = logger;
         this.replayService = replayService;
         this.valveReplayClient = valveReplayClient;
@@ -44,9 +41,9 @@ public class ReplaySchedule {
     @Scheduled(fixedDelay = 60000, initialDelay = 1000)
     public void job() {
         List<MatchId> matchIds = replayService.getMatchIds(PLAYER_IDS);
-
         List<DotaReplay> replayDetails = replayService.getReplayDetails(matchIds);
+
         valveReplayClient.downloadReplays(replayDetails);
-        System.out.println("!DOWNLOAD COMPLETED!");
+        logger.info("!!! DOWNLOAD COMPLETED !!!");
     }
 }

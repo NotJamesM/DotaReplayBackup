@@ -1,6 +1,7 @@
 package com.github.notjamesm.DotaReplayBackup;
 
 import com.github.notjamesm.DotaReplayBackup.clients.DotaApiClient;
+import com.github.notjamesm.DotaReplayBackup.domain.DotaReplay;
 import com.github.notjamesm.DotaReplayBackup.domain.Match;
 import com.github.notjamesm.DotaReplayBackup.domain.MatchId;
 import com.github.notjamesm.DotaReplayBackup.domain.PlayerId;
@@ -33,7 +34,6 @@ class ReplayServiceTest implements WithAssertions {
 
     @Test
     void shouldGetAllMatchIdsWithNoDuplicates() {
-        replayService = new ReplayService(dotaApiClient, logger);
         List<Match> player1Matches = List.of(aMatchWithMatchId(MatchId.of(987L)), aMatchWithMatchId(MatchId.of(951L)));
         List<Match> player2Matches = List.of(aMatchWithMatchId(MatchId.of(987L)), aMatchWithMatchId(MatchId.of(147L)));
 
@@ -42,6 +42,19 @@ class ReplayServiceTest implements WithAssertions {
         List<MatchId> matchIds = replayService.getMatchIds(List.of(PlayerId.of(123L), PlayerId.of(159L)));
 
         assertThat(matchIds).containsExactly(MatchId.of(987L), MatchId.of(951L), MatchId.of(147L));
+    }
+
+    @Test
+    void name() {
+        List<MatchId> matchIdList = List.of(MatchId.of(147L), MatchId.of(951L), MatchId.of(987L));
+        when(dotaApiClient.getReplayDetails(matchIdList)).thenReturn(List.of(aDotaReplay(987L), aDotaReplay(951L), aDotaReplay(147L)));
+
+        List<DotaReplay> replayDetails = replayService.getReplayDetails(matchIdList);
+        assertThat(replayDetails).hasSize(3);
+    }
+
+    private DotaReplay aDotaReplay(long matchId) {
+        return new DotaReplay(MatchId.of(matchId), 0, 0);
     }
 
     private Match aMatchWithMatchId(MatchId matchId) {
